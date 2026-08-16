@@ -20,6 +20,21 @@ jobs:
           mkdir project
           unzip -q "App Incu Emak.zip" -d project
 
+      - name: Check project structure
+        working-directory: project
+        run: |
+          echo "=== PROJECT FILES ==="
+          find . -maxdepth 3 -type f | sort | head -200
+          echo "=== ROOT ==="
+          ls -la
+
+      - name: Prepare environment file
+        working-directory: project
+        run: |
+          if [ ! -f .env.example ]; then
+            touch .env.example
+          fi
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -31,10 +46,28 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
+      - name: Check Gradle project
+        working-directory: project
+        run: |
+          echo "=== GRADLE FILES ==="
+          find . -maxdepth 2 -type f \( -name "*.gradle" -o -name "*.gradle.kts" -o -name "gradlew" \) -print
+          echo "=== SETTINGS ==="
+          if [ -f settings.gradle.kts ]; then
+            cat settings.gradle.kts
+          elif [ -f settings.gradle ]; then
+            cat settings.gradle
+          fi
+
       - name: Build Debug APK
         working-directory: project
         run: |
-          gradle assembleDebug --no-daemon
+          gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Find APK
+        working-directory: project
+        run: |
+          echo "=== APK FILES ==="
+          find app/build/outputs -type f -name "*.apk" -print
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
